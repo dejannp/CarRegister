@@ -22,9 +22,13 @@ namespace carregistersystem
         private void login_Load(object sender, EventArgs e)
         {
          
-            IniFile ini = new IniFile(@"..\\..\\config.ini");
+            IniFile ini = new IniFile(@"..\\..\\include\\config.ini");
            
-           
+             /*INI FILE PATH CHECK
+            string read;
+            read = ini.Read("DatabaseConfig", "username");
+            label1.Text = read;
+           */
 
 
 
