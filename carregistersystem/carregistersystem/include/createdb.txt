@@ -1,0 +1,5 @@
+IF db_id('CarRegister') IS NULL 
+CREATE DATABASE CarRegister;
+
+
+
