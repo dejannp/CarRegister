@@ -46,6 +46,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="carmanuf.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="carmanuf.Designer.cs">
+      <DependentUpon>carmanuf.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormAction.cs" />
     <Compile Include="IniFile.cs" />
     <Compile Include="login.cs">
       <SubType>Form</SubType>
@@ -53,10 +60,28 @@
     <Compile Include="login.Designer.cs">
       <DependentUpon>login.cs</DependentUpon>
     </Compile>
+    <Compile Include="managecarmanuf.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="managecarmanuf.Designer.cs">
+      <DependentUpon>managecarmanuf.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="selectmenu.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="selectmenu.Designer.cs">
+      <DependentUpon>selectmenu.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="carmanuf.resx">
+      <DependentUpon>carmanuf.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="login.resx">
       <DependentUpon>login.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="managecarmanuf.resx">
+      <DependentUpon>managecarmanuf.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -67,6 +92,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
+    <EmbeddedResource Include="selectmenu.resx">
+      <DependentUpon>selectmenu.cs</DependentUpon>
+    </EmbeddedResource>
     <None Include="include\config.ini" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

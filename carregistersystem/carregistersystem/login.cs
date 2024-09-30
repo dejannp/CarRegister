@@ -42,12 +42,13 @@ namespace carregistersystem
             {
                 conn.Open();
 
-                MessageBox.Show("RADI");
+                selectmenu sm = new selectmenu();
+                sm.ShowDialog();
 
             }
             catch
             {
-                MessageBox.Show("GRESKA!");
+                MessageBox.Show("Error!");
 
             }
 
@@ -76,8 +77,8 @@ namespace carregistersystem
                 ini.UpdateProperty("DatabaseCreated", "true", "DatabaseConfig");
 
 
-               
 
+                conn.Close();
 
 
 
@@ -87,7 +88,7 @@ namespace carregistersystem
 
             }
 
-
+            conn.Close();
 
         }
 
