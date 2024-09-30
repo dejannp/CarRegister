@@ -13,7 +13,8 @@ namespace carregistersystem
 {
     public partial class carmanuf : Form
     {
-        string username, password, provider, db, name, serial;
+        string username, password, provider, db;
+        public string name, serial;
 
         private void addToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -91,7 +92,9 @@ namespace carregistersystem
 
             try
             {
+                conn.Close();
                 conn.Open();
+               
 
                 string carmanufquerytext = "SELECT Name as 'Name', SerialNum as 'Serial' FROM CarManuf ";
                 SqlDataAdapter carmanufda = new SqlDataAdapter(carmanufquerytext, conn);

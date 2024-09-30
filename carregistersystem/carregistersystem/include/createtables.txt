@@ -1,22 +1,19 @@
 USE CarRegister;
 
 
-
 CREATE TABLE CarManuf (
-    Id INT PRIMARY KEY,
+    Id INT IDENTITY(1,1) PRIMARY KEY,
     Name VARCHAR(50),
     SerialNum VARCHAR(5),
     Active BIT
 );
 
 
-
 CREATE TABLE CarModel (
-    Id INT PRIMARY KEY,
+    Id INT IDENTITY(1,1) PRIMARY KEY,
     CarManufId INT,
     Name VARCHAR(50),
     FuelType VARCHAR(10),
     VIN VARCHAR(13),
     FOREIGN KEY (CarManufId) REFERENCES CarManuf(Id)
 );
-
