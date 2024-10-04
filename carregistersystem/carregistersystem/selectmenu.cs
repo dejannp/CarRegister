@@ -27,5 +27,10 @@ namespace carregistersystem
             carmanuf cm = new carmanuf();
             cm.ShowDialog();
         }
+
+        private void selectmenu_Load(object sender, EventArgs e)
+        {
+            
+        }
     }
 }

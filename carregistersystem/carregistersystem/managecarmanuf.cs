@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 using System.Data.SqlClient;
+using System.Windows.Forms;
 
 namespace carregistersystem
 {
@@ -21,50 +15,42 @@ namespace carregistersystem
         SqlCommand checknamequery, checkserialquery;
         public bool UpdateFlag { get; set; } = false;
 
-        private void carmanufexistscheck(out int checkquerynameresult, out int checkserialqueryresult)
-        {
-            switch (modus)
-            {
-                case FormAction.CarManufAdd:
-                    name = textBox1.Text;
-                    serial = textBox2.Text;
-                    break;
-            }
-
-            checknamequery = conn.CreateCommand();
-            checknamequery.CommandType = CommandType.Text;
-            checknamequery.Parameters.AddWithValue("@Name", name);
-            checknamequery.CommandText = "SELECT COUNT(*) FROM CarManuf WHERE Name=@Name";
-
-            checkserialquery = conn.CreateCommand();
-            checkserialquery.CommandType = CommandType.Text;
-            checkserialquery.Parameters.AddWithValue("@Serial", serial);
-            checkserialquery.CommandText = "SELECT COUNT(*) FROM CarManuf WHERE SerialNum=@Serial";
-
-            object nameResultObj = checknamequery.ExecuteScalar();
-            object serialResultObj = checkserialquery.ExecuteScalar();
-
-            checkquerynameresult = (nameResultObj != null) ? Convert.ToInt32(nameResultObj) : 0;
-            checkserialqueryresult = (serialResultObj != null) ? Convert.ToInt32(serialResultObj) : 0;
-        }
-
         public managecarmanuf()
         {
             InitializeComponent();
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void carmanufexistscheck(out int checkquerynameresult, out int checkserialqueryresult)
         {
-            this.Close();
-        }
+          //when opening managecarmanuf form via add menustrip from carmanuf form values name and serial are null, if bellow preventing that
+            if (modus == FormAction.CarManufAdd)
+            {
+                name = textBox1.Text;
+                serial = textBox2.Text;
 
-        private void managecarmanuf_FormClosed(object sender, FormClosedEventArgs e)
-        {
+                // checking of existence name
+                checknamequery = conn.CreateCommand();
+                checknamequery.CommandType = CommandType.Text;
+                checknamequery.Parameters.AddWithValue("@Name", name);
+                checknamequery.CommandText = "SELECT COUNT(*) FROM CarManuf WHERE Name=@Name";
 
-            UpdateFlag = true;
+                // checking of existence serial
+                checkserialquery = conn.CreateCommand();
+                checkserialquery.CommandType = CommandType.Text;
+                checkserialquery.Parameters.AddWithValue("@Serial", serial);
+                checkserialquery.CommandText = "SELECT COUNT(*) FROM CarManuf WHERE SerialNum=@Serial";
 
+                object nameResultObj = checknamequery.ExecuteScalar();
+                object serialResultObj = checkserialquery.ExecuteScalar();
 
-
+                checkquerynameresult = (nameResultObj != null) ? Convert.ToInt32(nameResultObj) : 0;
+                checkserialqueryresult = (serialResultObj != null) ? Convert.ToInt32(serialResultObj) : 0;
+            }
+            else
+            {
+                checkquerynameresult = 0;
+                checkserialqueryresult = 0;
+            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -76,7 +62,6 @@ namespace carregistersystem
                 switch (modus)
                 {
                     case FormAction.CarManufAdd:
-
                         if (textBox2.Text.Length > 5)
                         {
                             MessageBox.Show("The serial number cannot be more than 5 characters long.");
@@ -92,8 +77,6 @@ namespace carregistersystem
                         break;
 
                     case FormAction.CarManufDel:
-                        //debug msg MessageBox.Show(checkserialqueryresult.ToString() + checkserialqueryresult.ToString());
-
                         deletcarmanuf();
                         break;
                 }
@@ -130,52 +113,88 @@ namespace carregistersystem
 
         private void editcarmanuf()
         {
-            if (checknamequeryresult > 0 && checkserialqueryresult > 0)
-            {
-                editcheckmethod();
+            // variables for checking changes
+            bool isNameChanged = textBox1.Text != name;
+            bool isSerialChanged = textBox2.Text != serial;
 
-                if (checknamequeryresult > 0)
+            if (isNameChanged || isSerialChanged)
+            {
+                // checking new name if changed?
+                if (isNameChanged)
                 {
-                    MessageBox.Show("Manufacturer name already exists.");
+                    checknamequery = conn.CreateCommand();
+                    checknamequery.CommandType = CommandType.Text;
+                    checknamequery.Parameters.AddWithValue("@Name", textBox1.Text);
+                    checknamequery.CommandText = "SELECT COUNT(*) FROM CarManuf WHERE Name=@Name";
+                    object nameResultObj = checknamequery.ExecuteScalar();
+                    checknamequeryresult = (nameResultObj != null) ? Convert.ToInt32(nameResultObj) : 0;
+
+                    if (checknamequeryresult > 0)
+                    {
+                        MessageBox.Show("Manufacturer name already exists.");
+                        return;
+                    }
                 }
-                else if (checkserialqueryresult > 0)
+
+                // checking new serial if changed?
+                if (isSerialChanged)
                 {
-                    MessageBox.Show("Serial number already exists.");
+                    checkserialquery = conn.CreateCommand();
+                    checkserialquery.CommandType = CommandType.Text;
+                    checkserialquery.Parameters.AddWithValue("@Serial", textBox2.Text);
+                    checkserialquery.CommandText = "SELECT COUNT(*) FROM CarManuf WHERE SerialNum=@Serial";
+                    object serialResultObj = checkserialquery.ExecuteScalar();
+                    checkserialqueryresult = (serialResultObj != null) ? Convert.ToInt32(serialResultObj) : 0;
+
+                    if (checkserialqueryresult > 0)
+                    {
+                        MessageBox.Show("Serial number already exists.");
+                        return;
+                    }
                 }
-                else if (string.IsNullOrWhiteSpace(textBox1.Text) || string.IsNullOrWhiteSpace(textBox2.Text))
+
+                
+                SqlCommand editquery = conn.CreateCommand();
+                editquery.CommandType = CommandType.Text;
+
+                if (isNameChanged && !isSerialChanged)
                 {
-                    MessageBox.Show("All fields must be filled!");
+                    //changing only name
+                    editquery.Parameters.AddWithValue("@Nameedit", textBox1.Text);
+                    editquery.Parameters.AddWithValue("@Name", name);
+                    editquery.CommandText = "UPDATE CarManuf SET Name=@Nameedit WHERE Name=@Name";
+                }
+                else if (!isNameChanged && isSerialChanged)
+                {
+                   //changing only serial
+                    editquery.Parameters.AddWithValue("@serialedit", textBox2.Text);
+                    editquery.Parameters.AddWithValue("@serial", serial);
+                    editquery.CommandText = "UPDATE CarManuf SET SerialNum=@serialedit WHERE SerialNum=@serial";
                 }
                 else
                 {
-                   //Debug message MessageBox.Show(checknamequeryresult.ToString() + " " + checkserialqueryresult.ToString());
-
-                    SqlCommand editquery = conn.CreateCommand();
-                    editquery.CommandType = CommandType.Text;
-                    editquery.Parameters.AddWithValue("@Name", name);
-                    editquery.Parameters.AddWithValue("@serial", serial);
+                    // changing both
                     editquery.Parameters.AddWithValue("@Nameedit", textBox1.Text);
                     editquery.Parameters.AddWithValue("@serialedit", textBox2.Text);
-
-                    editquery.CommandText = "UPDATE CarManuf SET Name=@Nameedit, SerialNum=@serialedit Where Name=@Name AND SerialNum=@serial";
-                    editquery.ExecuteNonQuery();
-
-                    MessageBox.Show("Car manufacturer edited successfully!");
-
-                    textBox1.ReadOnly = true;
-                    textBox2.ReadOnly = true;
+                    editquery.Parameters.AddWithValue("@Name", name);
+                    editquery.Parameters.AddWithValue("@serial", serial);
+                    editquery.CommandText = "UPDATE CarManuf SET Name=@Nameedit, SerialNum=@serialedit WHERE Name=@Name AND SerialNum=@serial";
                 }
+
+                editquery.ExecuteNonQuery();
+                MessageBox.Show("Car manufacturer edited successfully!");
+
+                textBox1.ReadOnly = true;
+                textBox2.ReadOnly = true;
             }
             else
             {
-                MessageBox.Show("The car manufacturer you are trying to edit is not found in the database.");
+                MessageBox.Show("No changes were made.");
             }
         }
 
         private void addcarmanuf()
         {
-            
-
             SqlCommand addquery = conn.CreateCommand();
             addquery.CommandType = CommandType.Text;
             addquery.Parameters.AddWithValue("@Name", textBox1.Text);
@@ -202,27 +221,9 @@ namespace carregistersystem
             }
         }
 
-        private void editcheckmethod()
-        {
-            checknamequery = conn.CreateCommand();
-            checknamequery.CommandType = CommandType.Text;
-            checknamequery.Parameters.AddWithValue("@Name", textBox1.Text);
-            checknamequery.CommandText = "SELECT COUNT(*) FROM CarManuf WHERE Name=@Name";
-
-            checkserialquery = conn.CreateCommand();
-            checkserialquery.CommandType = CommandType.Text;
-            checkserialquery.Parameters.AddWithValue("@Serial", textBox2.Text);
-            checkserialquery.CommandText = "SELECT COUNT(*) FROM CarManuf WHERE SerialNum=@Serial";
-
-            object nameResultObj = checknamequery.ExecuteScalar();
-            object serialResultObj = checkserialquery.ExecuteScalar();
-
-            checknamequeryresult = (nameResultObj != null) ? Convert.ToInt32(nameResultObj) : 0;
-            checkserialqueryresult = (serialResultObj != null) ? Convert.ToInt32(serialResultObj) : 0;
-        }
-
         private void managecarmanuf_Load(object sender, EventArgs e)
         {
+            
             textBox1.Text = name;
             textBox2.Text = serial;
 
@@ -258,8 +259,18 @@ namespace carregistersystem
             }
             catch (Exception ex)
             {
-                //MessageBox.Show("Error" + ex.ToString());
+                MessageBox.Show("Error: " + ex.Message);
             }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void managecarmanuf_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            UpdateFlag = true;
         }
     }
 }

@@ -24,6 +24,11 @@ namespace carregistersystem
         {
             dataGridView1.AllowUserToAddRows = false;
             dataGridView1.RowHeadersVisible = false;
+            dataGridView1.AllowUserToAddRows = false;
+            dataGridView1.AllowUserToDeleteRows = false;
+            dataGridView1.ReadOnly = true;
+            dataGridView1.AllowUserToResizeColumns = false;
+            dataGridView1.AllowUserToResizeRows = false;
             // MessageBox.Show(update.ToString());
 
 
