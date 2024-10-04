@@ -101,6 +101,7 @@
             this.Controls.Add(this.label1);
             this.Name = "managecarmanuf";
             this.Text = "managecarmanuf";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.managecarmanuf_FormClosed);
             this.Load += new System.EventHandler(this.managecarmanuf_Load);
             this.ResumeLayout(false);
             this.PerformLayout();

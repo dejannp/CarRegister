@@ -112,6 +112,10 @@
   <ItemGroup>
     <Content Include="include\createdb.txt" />
     <Content Include="include\createtables.txt" />
+    <Content Include="include\exit.bmp" />
+    <Content Include="include\iks.bmp" />
+    <Content Include="include\pen.bmp" />
+    <Content Include="include\plus.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
