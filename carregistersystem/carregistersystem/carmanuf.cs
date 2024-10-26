@@ -30,6 +30,9 @@ namespace carregistersystem
             dataGridView1.ReadOnly = true;
             dataGridView1.AllowUserToResizeColumns = false;
             dataGridView1.AllowUserToResizeRows = false;
+            dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.DisplayedCells;
+             
             // MessageBox.Show(update.ToString());
 
 
