@@ -90,8 +90,15 @@ namespace carregistersystem
                 if (databaseAvailable)
                 {
                     
-                    selectmenu sm = new selectmenu();
-                    sm.ShowDialog(); 
+                    
+
+                   
+
+                    this.DialogResult = DialogResult.OK;  
+                    this.Close();  
+
+
+
                 }
                 else
                 {
@@ -102,6 +109,7 @@ namespace carregistersystem
             {
                 MessageBox.Show("Error: " + ex.Message);
             }
+            
         }
 
         private void button2_Click(object sender, EventArgs e)

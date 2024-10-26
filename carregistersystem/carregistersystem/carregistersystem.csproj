@@ -60,11 +60,11 @@
     <Compile Include="login.Designer.cs">
       <DependentUpon>login.cs</DependentUpon>
     </Compile>
-    <Compile Include="managecarmanuf.cs">
+    <Compile Include="frmEditCarManuf.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="managecarmanuf.Designer.cs">
-      <DependentUpon>managecarmanuf.cs</DependentUpon>
+    <Compile Include="frmEditCarManuf.Designer.cs">
+      <DependentUpon>frmEditCarManuf.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -80,8 +80,8 @@
     <EmbeddedResource Include="login.resx">
       <DependentUpon>login.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="managecarmanuf.resx">
-      <DependentUpon>managecarmanuf.cs</DependentUpon>
+    <EmbeddedResource Include="frmEditCarManuf.resx">
+      <DependentUpon>frmEditCarManuf.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

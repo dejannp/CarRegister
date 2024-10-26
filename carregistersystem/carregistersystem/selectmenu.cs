@@ -25,7 +25,18 @@ namespace carregistersystem
         private void button1_Click(object sender, EventArgs e)
         {
             carmanuf cm = new carmanuf();
-            cm.ShowDialog();
+            
+
+            // Zatvara selectmenu formu
+            this.DialogResult = DialogResult.OK;
+            this.Close();
+
+
+
+
+
+
+
         }
 
         private void selectmenu_Load(object sender, EventArgs e)

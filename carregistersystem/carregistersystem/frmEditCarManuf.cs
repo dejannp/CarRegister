@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace carregistersystem
 {
-    public partial class managecarmanuf : Form
+    public partial class frmEditCarManuf : Form
     {
         int checknamequeryresult = 0, checkserialqueryresult = 0;
         SqlConnection conn = new SqlConnection();
@@ -13,28 +13,29 @@ namespace carregistersystem
         public string name, serial;
         string username, password, db, provider;
         SqlCommand checknamequery, checkserialquery;
+        bool changesmade = false;
         public bool UpdateFlag { get; set; } = false;
 
-        public managecarmanuf()
+        public frmEditCarManuf()
         {
             InitializeComponent();
         }
 
         private void carmanufexistscheck(out int checkquerynameresult, out int checkserialqueryresult)
         {
-          //when opening managecarmanuf form via add menustrip from carmanuf form values name and serial are null, if bellow preventing that
+            // when opening managecarmanuf form via add menustrip from carmanuf form, values name and serial are null
             if (modus == FormAction.CarManufAdd)
             {
-                name = textBox1.Text;
-                serial = textBox2.Text;
+                name = txtName.Text;
+                serial = txtSerial.Text;
 
-                // checking of existence name
+                // checking if name exists
                 checknamequery = conn.CreateCommand();
                 checknamequery.CommandType = CommandType.Text;
                 checknamequery.Parameters.AddWithValue("@Name", name);
                 checknamequery.CommandText = "SELECT COUNT(*) FROM CarManuf WHERE Name=@Name";
 
-                // checking of existence serial
+                // checking if serial exists
                 checkserialquery = conn.CreateCommand();
                 checkserialquery.CommandType = CommandType.Text;
                 checkserialquery.Parameters.AddWithValue("@Serial", serial);
@@ -55,21 +56,24 @@ namespace carregistersystem
 
         private void button1_Click(object sender, EventArgs e)
         {
-            carmanufexistscheck(out checknamequeryresult, out checkserialqueryresult);
+            if (modus == FormAction.CarManufAdd || modus == FormAction.CarManufEdit)
+            {
+                // Check if serial number is valid
+                if (string.IsNullOrEmpty(txtSerial.Text) || txtSerial.Text.Length !=5)
+                {
+                    MessageBox.Show("The serial number cannot be empty and must be 5 characters long.");
+                    return;
+                }
+
+                carmanufexistscheck(out checknamequeryresult, out checkserialqueryresult);
+            }
 
             try
             {
                 switch (modus)
                 {
                     case FormAction.CarManufAdd:
-                        if (textBox2.Text.Length > 5)
-                        {
-                            MessageBox.Show("The serial number cannot be more than 5 characters long.");
-                        }
-                        else
-                        {
-                            addcarmanuf();
-                        }
+                        addcarmanuf();
                         break;
 
                     case FormAction.CarManufEdit:
@@ -80,6 +84,7 @@ namespace carregistersystem
                         deletcarmanuf();
                         break;
                 }
+                this.Close();
             }
             catch (SqlException ex)
             {
@@ -93,20 +98,31 @@ namespace carregistersystem
 
         private void deletcarmanuf()
         {
-            if (checknamequeryresult > 0 && checkserialqueryresult > 0)
-            {
-                SqlCommand deletequery = conn.CreateCommand();
-                deletequery.CommandType = CommandType.Text;
-                deletequery.Parameters.AddWithValue("@Name", name);
-                deletequery.Parameters.AddWithValue("@serial", serial);
-                deletequery.Parameters.AddWithValue("@inactive", false);
-                deletequery.CommandText = "UPDATE CarManuf SET Active=@inactive Where Name=@Name AND SerialNum=@serial";
-                deletequery.ExecuteNonQuery();
+            // Perform a fresh check to see if the manufacturer exists before deleting
+            SqlCommand checkQuery = conn.CreateCommand();
+            checkQuery.CommandType = CommandType.Text;
+            checkQuery.Parameters.AddWithValue("@Name", name);
+            checkQuery.Parameters.AddWithValue("@Serial", serial);
+            checkQuery.CommandText = "SELECT COUNT(*) FROM CarManuf WHERE Name=@Name AND SerialNum=@Serial";
+            object resultObj = checkQuery.ExecuteScalar();
+            int result = (resultObj != null) ? Convert.ToInt32(resultObj) : 0;
 
-                MessageBox.Show("Car manufacturer deleted successfully!");
+            if (result > 0)
+            {
+                // Manufacturer found, proceed to deactivate
+                SqlCommand deleteQuery = conn.CreateCommand();
+                deleteQuery.CommandType = CommandType.Text;
+                deleteQuery.Parameters.AddWithValue("@Name", name);
+                deleteQuery.Parameters.AddWithValue("@Serial", serial);
+                deleteQuery.Parameters.AddWithValue("@Inactive", false);
+                deleteQuery.CommandText = "UPDATE CarManuf SET Active=@Inactive WHERE Name=@Name AND SerialNum=@Serial";
+                deleteQuery.ExecuteNonQuery();
+                changesmade = true;
+                //MessageBox.Show("Car manufacturer deleted successfully!");
             }
             else
             {
+                // Manufacturer not found
                 MessageBox.Show("The car manufacturer you are trying to delete is not found in the database.");
             }
         }
@@ -114,17 +130,17 @@ namespace carregistersystem
         private void editcarmanuf()
         {
             // variables for checking changes
-            bool isNameChanged = textBox1.Text != name;
-            bool isSerialChanged = textBox2.Text != serial;
+            bool isNameChanged = txtName.Text != name;
+            bool isSerialChanged = txtSerial.Text != serial;
 
             if (isNameChanged || isSerialChanged)
             {
-                // checking new name if changed?
+                // checking new name if changed
                 if (isNameChanged)
                 {
                     checknamequery = conn.CreateCommand();
                     checknamequery.CommandType = CommandType.Text;
-                    checknamequery.Parameters.AddWithValue("@Name", textBox1.Text);
+                    checknamequery.Parameters.AddWithValue("@Name", txtName.Text);
                     checknamequery.CommandText = "SELECT COUNT(*) FROM CarManuf WHERE Name=@Name";
                     object nameResultObj = checknamequery.ExecuteScalar();
                     checknamequeryresult = (nameResultObj != null) ? Convert.ToInt32(nameResultObj) : 0;
@@ -136,12 +152,12 @@ namespace carregistersystem
                     }
                 }
 
-                // checking new serial if changed?
+                // checking new serial if changed
                 if (isSerialChanged)
                 {
                     checkserialquery = conn.CreateCommand();
                     checkserialquery.CommandType = CommandType.Text;
-                    checkserialquery.Parameters.AddWithValue("@Serial", textBox2.Text);
+                    checkserialquery.Parameters.AddWithValue("@Serial", txtSerial.Text);
                     checkserialquery.CommandText = "SELECT COUNT(*) FROM CarManuf WHERE SerialNum=@Serial";
                     object serialResultObj = checkserialquery.ExecuteScalar();
                     checkserialqueryresult = (serialResultObj != null) ? Convert.ToInt32(serialResultObj) : 0;
@@ -153,52 +169,54 @@ namespace carregistersystem
                     }
                 }
 
-                
                 SqlCommand editquery = conn.CreateCommand();
                 editquery.CommandType = CommandType.Text;
 
                 if (isNameChanged && !isSerialChanged)
                 {
-                    //changing only name
-                    editquery.Parameters.AddWithValue("@Nameedit", textBox1.Text);
+                    // changing only name
+                    editquery.Parameters.AddWithValue("@Nameedit", txtName.Text);
                     editquery.Parameters.AddWithValue("@Name", name);
                     editquery.CommandText = "UPDATE CarManuf SET Name=@Nameedit WHERE Name=@Name";
                 }
                 else if (!isNameChanged && isSerialChanged)
                 {
-                   //changing only serial
-                    editquery.Parameters.AddWithValue("@serialedit", textBox2.Text);
+                    // changing only serial
+                    editquery.Parameters.AddWithValue("@serialedit", txtSerial.Text);
                     editquery.Parameters.AddWithValue("@serial", serial);
                     editquery.CommandText = "UPDATE CarManuf SET SerialNum=@serialedit WHERE SerialNum=@serial";
                 }
                 else
                 {
                     // changing both
-                    editquery.Parameters.AddWithValue("@Nameedit", textBox1.Text);
-                    editquery.Parameters.AddWithValue("@serialedit", textBox2.Text);
+                    editquery.Parameters.AddWithValue("@Nameedit", txtName.Text);
+                    editquery.Parameters.AddWithValue("@serialedit", txtSerial.Text);
                     editquery.Parameters.AddWithValue("@Name", name);
                     editquery.Parameters.AddWithValue("@serial", serial);
                     editquery.CommandText = "UPDATE CarManuf SET Name=@Nameedit, SerialNum=@serialedit WHERE Name=@Name AND SerialNum=@serial";
                 }
 
                 editquery.ExecuteNonQuery();
+                changesmade = true;
                 MessageBox.Show("Car manufacturer edited successfully!");
 
-                textBox1.ReadOnly = true;
-                textBox2.ReadOnly = true;
-            }
-            else
-            {
-                MessageBox.Show("No changes were made.");
+//  unnecesary              txtName.ReadOnly = true;
+  //              txtSerial.ReadOnly = true;
             }
         }
 
         private void addcarmanuf()
         {
+            if (string.IsNullOrWhiteSpace(txtName.Text) || string.IsNullOrWhiteSpace(txtSerial.Text))
+            {
+                MessageBox.Show("All fields must be filled!");
+                return;
+            }
+
             SqlCommand addquery = conn.CreateCommand();
             addquery.CommandType = CommandType.Text;
-            addquery.Parameters.AddWithValue("@Name", textBox1.Text);
-            addquery.Parameters.AddWithValue("@Serial", textBox2.Text);
+            addquery.Parameters.AddWithValue("@Name", txtName.Text);
+            addquery.Parameters.AddWithValue("@Serial", txtSerial.Text);
             addquery.Parameters.AddWithValue("@Active", true);
             addquery.CommandText = "INSERT INTO CarManuf (Name, SerialNum, Active) VALUES (@Name, @Serial, @Active)";
 
@@ -210,22 +228,18 @@ namespace carregistersystem
             {
                 MessageBox.Show("Serial number already exists.");
             }
-            else if (string.IsNullOrWhiteSpace(textBox1.Text) || string.IsNullOrWhiteSpace(textBox2.Text))
-            {
-                MessageBox.Show("All fields must be filled!");
-            }
             else
             {
                 addquery.ExecuteNonQuery();
                 MessageBox.Show("New car manufacturer added successfully!");
+                changesmade = true;
             }
         }
 
         private void managecarmanuf_Load(object sender, EventArgs e)
         {
-            
-            textBox1.Text = name;
-            textBox2.Text = serial;
+            txtName.Text = name;
+            txtSerial.Text = serial;
 
             IniFile ini = new IniFile(@"..\\..\\include\\config.ini");
             provider = ini.Read("DatabaseConfig", "Server");
@@ -238,17 +252,17 @@ namespace carregistersystem
             switch (modus)
             {
                 case FormAction.CarManufAdd:
-                    button1.Text = "Add";
+                    btnAction.Text = "Add";
                     break;
 
                 case FormAction.CarManufEdit:
-                    button1.Text = "Edit";
+                    btnAction.Text = "Edit";
                     break;
 
                 case FormAction.CarManufDel:
-                    button1.Text = "DELETE";
-                    textBox1.ReadOnly = true;
-                    textBox2.ReadOnly = true;
+                    btnAction.Text = "Delete";
+                    txtName.ReadOnly = true;
+                    txtSerial.ReadOnly = true;
                     break;
             }
 
@@ -270,7 +284,10 @@ namespace carregistersystem
 
         private void managecarmanuf_FormClosed(object sender, FormClosedEventArgs e)
         {
-            UpdateFlag = true;
-        }
+            if (changesmade)
+            {
+                UpdateFlag = true;
+            }
+            }
     }
 }

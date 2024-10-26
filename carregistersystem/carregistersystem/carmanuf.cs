@@ -5,6 +5,7 @@ using System.Windows.Forms;
 using System.Drawing;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 
 namespace carregistersystem
 {
@@ -65,61 +66,64 @@ namespace carregistersystem
         private void addToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ShowForm(FormAction.CarManufAdd);
+            update = false;
         }
 
         private void editToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ShowForm(FormAction.CarManufEdit);
+            update = false;
         }
 
         private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ShowForm(FormAction.CarManufDel);
+            update = false;
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
             string search = textBox1.Text;
-            string searchquery = "SELECT Name, SerialNum FROM CarManuf WHERE ( ";
-            List<string> searchcontent = search.Split(' ').ToList();
-            int counter = searchcontent.Count;
+            List<string> searchContent = search.Split(' ').ToList();
+            int counter = searchContent.Count;
 
+           
+            string searchQueryText = "SELECT Name, SerialNum As 'Serial' FROM CarManuf WHERE Active = 1 AND (";
 
+            // making parameters list from search for SQL query
+            List<string> nameParameters = new List<string>();
+            List<string> serialNumParamters = new List<string>();
 
-
-            for (int o = 0; o < counter; o++)
+            for (int i = 0; i < counter; i++)
             {
-                searchquery = searchquery + " Name LIKE '%" + searchcontent[o] + "%'  ";
-
-                if (o < counter - 1)
-                {
-                    searchquery = searchquery + " OR";
-                }
-
+                nameParameters.Add($"Name LIKE @search{i}");
+                serialNumParamters.Add($"SerialNum LIKE @search{i}");
             }
-            searchquery = searchquery + ") AND (";
-
-
-
-            for (int o = 0; o < counter; o++)
-            {
-                searchquery = searchquery + " SerialNum LIKE '%" + searchcontent[o] + "%'";
-
-                if (o < counter - 1)
-                {
-                    searchquery = searchquery + " OR";
-                }
-
-            }
-            searchquery = searchquery + ") AND Active=1";
 
             
-           
+            searchQueryText += "(" + string.Join(" OR ", nameParameters) + ") OR (" + string.Join(" OR ", serialNumParamters) + "))";
 
-            SqlDataAdapter da = new SqlDataAdapter(searchquery, conn);
-            DataTable dt = new DataTable();
-            da.Fill(dt);
-            dataGridView1.DataSource = dt;
+            SqlCommand searchquery = conn.CreateCommand();
+            searchquery.CommandType = CommandType.Text;
+            searchquery.CommandText = searchQueryText;
+
+                //Adding parameters for search
+                for (int i = 0; i < counter; i++)
+                {
+                    //MessageBox.Show(searchContent[i].ToString());
+                    searchquery.Parameters.AddWithValue($"@search{i}", "%" + searchContent[i] + "%");
+                }
+
+                SqlDataAdapter searchDa = new SqlDataAdapter(searchquery);
+                DataTable searchDt = new DataTable();
+                searchDa.Fill(searchDt);
+                dataGridView1.DataSource = searchDt;
+            
+
+           //DEBUG File.WriteAllText("beton",searchQueryText.ToString());
+            //File.WriteAllText("beton", searchQuery);
+     
+
 
 
 
@@ -162,7 +166,7 @@ namespace carregistersystem
 
         private void ShowForm(FormAction modus)
         {
-            managecarmanuf mcf = new managecarmanuf();
+            frmEditCarManuf mcf = new frmEditCarManuf();
 
          
             mcf.FormClosed += new FormClosedEventHandler(managecarmanuf_FormClosed);
@@ -183,7 +187,7 @@ namespace carregistersystem
                 }
             }
 
-            // Ako je dodavanje
+          // if is adding?
             if (modus == FormAction.CarManufAdd)
             {
                 mcf.modus = modus;
@@ -193,7 +197,7 @@ namespace carregistersystem
 
         private void managecarmanuf_FormClosed(object sender, FormClosedEventArgs e)
         {
-            managecarmanuf mcmf = sender as managecarmanuf;
+            frmEditCarManuf mcmf = sender as frmEditCarManuf;
             if (mcmf != null)
             {
            
