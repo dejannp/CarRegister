@@ -27,10 +27,10 @@ namespace carregistersystem
             carmanuf cm = new carmanuf();
             
 
-            // Zatvara selectmenu formu
+            
             this.DialogResult = DialogResult.OK;
             this.Close();
-
+           
 
 
 
@@ -42,6 +42,12 @@ namespace carregistersystem
         private void selectmenu_Load(object sender, EventArgs e)
         {
             
+        }
+
+        private void button2_Click_1(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.Ignore;
+            this.Close();
         }
     }
 }

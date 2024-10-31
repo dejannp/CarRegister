@@ -13,6 +13,7 @@ CREATE TABLE CarModel (
     Id INT IDENTITY(1,1) PRIMARY KEY,
     CarManufId INT,
     Name VARCHAR(50),
+	CarManufName VARCHAR(50),
     FuelType VARCHAR(10),
     VIN VARCHAR(13),
     FOREIGN KEY (CarManufId) REFERENCES CarManuf(Id)

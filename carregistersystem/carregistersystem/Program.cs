@@ -1,40 +1,50 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace carregistersystem
 {
     static class Program
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            //  Application.Run(new login());
 
-
-          //first open loginfrm
+            
             login loginForm = new login();
-            if (loginForm.ShowDialog() == DialogResult.OK)  // Ako je login uspješan
+
+            if (loginForm.ShowDialog() == DialogResult.OK)  // if login succed
             {
-                // if  db login succed open selectmenuform 
-                selectmenu selectMenuForm = new selectmenu();
-                if (selectMenuForm.ShowDialog() == DialogResult.OK)
+                while (true)
                 {
-                  // open carmanufform
-                    carmanuf carmanufForm = new carmanuf();
-                    carmanufForm.ShowDialog();
+                    
+                    selectmenu selectMenuForm = new selectmenu();
+
+                    var result = selectMenuForm.ShowDialog();
+                    if (result == DialogResult.OK)
+                    {
+                        ///open carmanuf
+                        carmanuf carmanufForm = new carmanuf();
+                        
+                            carmanufForm.ShowDialog();
+                        
+                    }
+                    else if (result == DialogResult.Ignore)
+                    {
+                       //open carmodel
+                        carmodel carmodelform = new carmodel();
+                        
+                            carmodelform.ShowDialog();
+                        
+                    }
+                    else
+                    {
+                        //break loop
+                        break;
+                    }
                 }
             }
-
-
-
         }
     }
 }

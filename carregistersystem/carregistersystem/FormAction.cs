@@ -11,7 +11,7 @@ namespace carregistersystem
         CarManufAdd=1,
         CarManufEdit=2,
         CarManufDel=3,
-        CarModel=4,
+        CarModelAdd=4,
         CarModelEdit=5,
         CarModelDel=6,
 
