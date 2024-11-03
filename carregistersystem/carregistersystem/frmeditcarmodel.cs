@@ -48,7 +48,7 @@ namespace carregistersystem
                   
                     checkvinquery.CommandText = checkvin;
 
-                    checkvinquery.Parameters.Add("@vin", vinNumber);
+                    checkvinquery.Parameters.AddWithValue("@vin", vinNumber);
 
                     //ensuring that same VIN doesen t exist
                     while ((int)checkvinquery.ExecuteNonQuery() > 0)
