@@ -7,7 +7,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Data;
 using System.IO;
 using System.Data.SqlClient;
 
@@ -16,8 +15,11 @@ namespace carregistersystem
     public partial class carmodel : Form
     {
         string username, password, provider, db;
-        int carmodelid, carmanufid, generatevin;
+        public int carmodelid, carmanufid;
         public string name, vin,fueltype, CarManufName;
+        SqlConnection conn = new SqlConnection();
+        string carmodelidquerytext = "SELECT Id FROM CarModel WHERE Name=@Name";
+        string carmanufnameidquerytext = "SELECT Id FROM CarManuf WHERE Name=@Name";
 
         private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -26,7 +28,7 @@ namespace carregistersystem
 
         private void editToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show(CarManufName + name  + vin + fueltype);
+           //debug msg MessageBox.Show(CarManufName + name  + vin + fueltype);
             ShowForm(FormAction.CarModelEdit);
         }
 
@@ -55,6 +57,40 @@ namespace carregistersystem
                     {
                         fueltype = selectedRow.Cells[3].Value.ToString();
                     }
+
+
+
+
+                    SqlCommand carmodelidquery = conn.CreateCommand();
+                    carmodelidquery.CommandType = CommandType.Text;
+                    carmodelidquery.CommandText = carmodelidquerytext;
+                    carmodelidquery.Parameters.AddWithValue("@Name", name);
+                    carmodelid = (int)carmodelidquery.ExecuteScalar();
+
+                    var resultcarmodelid = carmodelidquery.ExecuteScalar();
+                    carmodelid = resultcarmodelid != null ? (int)resultcarmodelid : -1; // Postavi na -1 ako nema rezultata
+
+                    SqlCommand carmanufnameidquery = conn.CreateCommand();
+                     carmanufnameidquery.CommandType = CommandType.Text;
+                     carmanufnameidquery.CommandText = carmanufnameidquerytext;
+                     carmanufnameidquery.Parameters.AddWithValue("@Name", CarManufName);
+
+                    var resultcarmanufid = carmanufnameidquery.ExecuteScalar();
+                    carmanufid = resultcarmanufid != null ? (int)resultcarmanufid : -1;
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    //Debug   MessageBox.Show(carmodelid.ToString());
                 }
                 catch (Exception ex)
                 {
@@ -90,8 +126,7 @@ namespace carregistersystem
        
 
         public bool update = false;
-        SqlConnection conn = new SqlConnection();
-
+       
         public carmodel()
         {
             InitializeComponent();
@@ -136,6 +171,15 @@ namespace carregistersystem
                 DataTable carmodeldt = new DataTable();
                 carmodelda.Fill(carmodeldt);
                 dataGridView1.DataSource = carmodeldt;
+
+
+
+
+
+
+
+
+               
             }
             catch (Exception ex)
             {
@@ -162,8 +206,8 @@ namespace carregistersystem
         {
             frmeditcarmodel cm = new frmeditcarmodel();
 
-            
-           
+            cm.FormClosed += new FormClosedEventHandler(frmeditcarmodel_FormClosed);
+
 
             if (modus == FormAction.CarModelDel || modus == FormAction.CarModelEdit)
             {
@@ -174,6 +218,12 @@ namespace carregistersystem
                 }
                 else
                 {
+                    cm.carmodelid = carmodelid;
+                    cm.carmodelname = name;
+                    cm.carmanufname = CarManufName;
+                    cm.fueltype = fueltype;
+                    cm.carmanufid = carmanufid;
+                    
                     cm.modus = modus;
                     cm.ShowDialog();
 
@@ -183,12 +233,56 @@ namespace carregistersystem
             // if is adding?
             if (modus == FormAction.CarModelAdd)
             {
+            
                 cm.modus = modus;
                 cm.ShowDialog();
 
                 
             }
         }
+
+        private void frmeditcarmodel_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            frmeditcarmodel cm= sender as frmeditcarmodel;
+
+            if (cm != null)
+            {
+
+
+                if (cm.UpdateFlag)
+                {
+                    string carmodelquerytext = "SELECT CarManufName as 'Car manufacturer', Name as 'Name', VIN as 'VIN', FuelType as 'Fuel type'  FROM CarModel ";
+                    SqlDataAdapter carmodelda = new SqlDataAdapter(carmodelquerytext, conn);
+                    DataTable carmodeldt = new DataTable();
+                    carmodelda.Fill(carmodeldt);
+                    dataGridView1.DataSource = carmodeldt;
+                    
+                }
+
+
+
+
+
+
+
+            }
+
+
+
+
+
+
+
+        }
+
+
+
+
+
+
+
+
+
 
 
 
