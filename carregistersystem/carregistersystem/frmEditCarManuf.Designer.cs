@@ -55,6 +55,8 @@
             // txtSerial
             // 
             this.txtSerial.Location = new System.Drawing.Point(78, 90);
+            this.txtSerial.MaxLength = 5;
+            this.txtSerial.MinimumSize = new System.Drawing.Size(0, 5);
             this.txtSerial.Name = "txtSerial";
             this.txtSerial.Size = new System.Drawing.Size(133, 20);
             this.txtSerial.TabIndex = 3;
@@ -102,6 +104,7 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
             this.MinimizeBox = false;
             this.Name = "frmEditCarManuf";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "managecarmanuf";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.managecarmanuf_FormClosed);
             this.Load += new System.EventHandler(this.managecarmanuf_Load);

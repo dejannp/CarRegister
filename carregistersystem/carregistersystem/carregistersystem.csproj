@@ -46,24 +46,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="carmanuf.cs">
+    <Compile Include="frmCarManuf.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="carmanuf.Designer.cs">
-      <DependentUpon>carmanuf.cs</DependentUpon>
+    <Compile Include="frmCarManuf.Designer.cs">
+      <DependentUpon>frmCarManuf.cs</DependentUpon>
     </Compile>
-    <Compile Include="carmodel.cs">
+    <Compile Include="frmCarModel.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="carmodel.Designer.cs">
-      <DependentUpon>carmodel.cs</DependentUpon>
+    <Compile Include="frmCarModel.Designer.cs">
+      <DependentUpon>frmCarModel.cs</DependentUpon>
     </Compile>
     <Compile Include="FormAction.cs" />
-    <Compile Include="frmeditcarmodel.cs">
+    <Compile Include="frmEditCarModel.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="frmeditcarmodel.Designer.cs">
-      <DependentUpon>frmeditcarmodel.cs</DependentUpon>
+    <Compile Include="frmEditCarModel.Designer.cs">
+      <DependentUpon>frmEditCarModel.cs</DependentUpon>
     </Compile>
     <Compile Include="IniFile.cs" />
     <Compile Include="login.cs">
@@ -86,14 +86,14 @@
     <Compile Include="selectmenu.Designer.cs">
       <DependentUpon>selectmenu.cs</DependentUpon>
     </Compile>
-    <EmbeddedResource Include="carmanuf.resx">
-      <DependentUpon>carmanuf.cs</DependentUpon>
+    <EmbeddedResource Include="frmCarManuf.resx">
+      <DependentUpon>frmCarManuf.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="carmodel.resx">
-      <DependentUpon>carmodel.cs</DependentUpon>
+    <EmbeddedResource Include="frmCarModel.resx">
+      <DependentUpon>frmCarModel.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="frmeditcarmodel.resx">
-      <DependentUpon>frmeditcarmodel.cs</DependentUpon>
+    <EmbeddedResource Include="frmEditCarModel.resx">
+      <DependentUpon>frmEditCarModel.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="login.resx">
       <DependentUpon>login.cs</DependentUpon>

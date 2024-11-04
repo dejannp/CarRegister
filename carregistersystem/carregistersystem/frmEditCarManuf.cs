@@ -260,6 +260,7 @@ namespace carregistersystem
                     break;
 
                 case FormAction.CarManufDel:
+                    btnAction.Focus();
                     btnAction.Text = "Delete";
                     txtName.ReadOnly = true;
                     txtSerial.ReadOnly = true;

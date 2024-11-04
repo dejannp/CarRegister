@@ -24,7 +24,7 @@ namespace carregistersystem
 
         private void button1_Click(object sender, EventArgs e)
         {
-            carmanuf cm = new carmanuf();
+            frmCarManuf cm = new frmCarManuf();
             
 
             

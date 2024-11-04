@@ -9,14 +9,14 @@ using System.IO;
 
 namespace carregistersystem
 {
-    public partial class carmanuf : Form
+    public partial class frmCarManuf : Form
     {
         string username, password, provider, db;
         public string name, serial;
         public bool update = false;
         SqlConnection conn = new SqlConnection();
 
-        public carmanuf()
+        public frmCarManuf()
         {
             InitializeComponent();
         }
@@ -86,11 +86,17 @@ namespace carregistersystem
 
         private void button1_Click(object sender, EventArgs e)
         {
+            searchData();
+
+        }
+
+        private void searchData()
+        {
             string search = textBox1.Text;
             List<string> searchContent = search.Split(' ').ToList();
             int counter = searchContent.Count;
 
-           
+
             string searchQueryText = "SELECT Name, SerialNum As 'Serial' FROM CarManuf WHERE Active = 1 AND (";
 
             // making parameters list from search for SQL query
@@ -103,29 +109,28 @@ namespace carregistersystem
                 serialNumParamters.Add($"SerialNum LIKE @search{i}");
             }
 
-            
+
             searchQueryText += "(" + string.Join(" OR ", nameParameters) + ") OR (" + string.Join(" OR ", serialNumParamters) + "))";
 
             SqlCommand searchquery = conn.CreateCommand();
             searchquery.CommandType = CommandType.Text;
             searchquery.CommandText = searchQueryText;
 
-                //Adding parameters for search
-                for (int i = 0; i < counter; i++)
-                {
-                    //MessageBox.Show(searchContent[i].ToString());
-                    searchquery.Parameters.AddWithValue($"@search{i}", "%" + searchContent[i] + "%");
-                }
+            //Adding parameters for search
+            for (int i = 0; i < counter; i++)
+            {
+                //MessageBox.Show(searchContent[i].ToString());
+                searchquery.Parameters.AddWithValue($"@search{i}", "%" + searchContent[i] + "%");
+            }
 
-                SqlDataAdapter searchDa = new SqlDataAdapter(searchquery);
-                DataTable searchDt = new DataTable();
-                searchDa.Fill(searchDt);
-                dataGridView1.DataSource = searchDt;
-            
+            SqlDataAdapter searchDa = new SqlDataAdapter(searchquery);
+            DataTable searchDt = new DataTable();
+            searchDa.Fill(searchDt);
+            dataGridView1.DataSource = searchDt;
 
-           //DEBUG File.WriteAllText("beton",searchQueryText.ToString());
+
+            //DEBUG File.WriteAllText("beton",searchQueryText.ToString());
             //File.WriteAllText("beton", searchQuery);
-     
 
 
 
@@ -133,9 +138,14 @@ namespace carregistersystem
 
 
 
+        }
 
-
-
+        private void textBox1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                searchData();
+            }
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)

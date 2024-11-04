@@ -14,11 +14,11 @@ using System.Data.SqlClient;
 namespace carregistersystem
 {
    
-    public partial class frmeditcarmodel : Form
+    public partial class frmEditCarModel : Form
     {
         SqlConnection conn = new SqlConnection();
-      
-        string username, password, db, provider;
+
+        string username, password, db, provider, vinNumber;
         public FormAction modus;
         public string carmodelname, fueltype, carmanufname;
         string selectedcarmanuf, selectedcarmanufname;
@@ -26,6 +26,125 @@ namespace carregistersystem
         public bool UpdateFlag { get; set; } = false;
         bool changesmade = false;
 
+
+
+
+
+        private void frmeditcarmodel_Load(object sender, EventArgs e)
+        {
+
+            //    MessageBox.Show(carmodelid.ToString());
+
+            IniFile ini = new IniFile(@"..\\..\\include\\config.ini");
+            provider = ini.Read("DatabaseConfig", "Server");
+            username = ini.Read("DatabaseConfig", "Username");
+            password = ini.Read("DatabaseConfig", "Password");
+            db = ini.Read("DatabaseConfig", "dbupiti");
+
+            
+
+            conn.ConnectionString = $"Data Source={provider};Initial Catalog={db};User id={username};Password={password};";
+
+            try
+            {
+                CmbInitalization();
+                
+                if (modus != FormAction.CarModelAdd)
+                {
+                    readData();
+                }
+                else
+                {
+                    vinNumber = GenerateVIN();
+                    txtVIN.Text = vinNumber;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message);
+            }
+
+            switch (modus)
+
+            {
+                case FormAction.CarModelAdd:
+
+                    this.Text += "-Add";
+                    btnSave.Text = "ADD";
+                    break;
+
+                case FormAction.CarModelEdit:
+                    btnSave.Text = "EDIT";
+                    this.Text += "-Edit";
+                    break;
+
+                case FormAction.CarModelDel:
+
+                    this.Text += "-Delete";
+                    btnRefreshVIN.Enabled = false;
+                    rbDiesel.Enabled = false;
+                    rbPetrol.Enabled = false;
+                    txtName.Enabled = false;
+                    cmbManuf.Enabled = false;
+                    btnSave.Text = "DELETE";
+                    txtVIN.Enabled = false;
+                    break;
+            }
+
+            fueltype = rbDiesel.Checked ? "Diesel" : "Petrol";
+
+        }
+
+        private void readData()
+        {
+            string sQ = @"SELECT  cm.[Id] As CarModelId
+                                          , ISNULL(cm.[CarManufId], 0) As CarManufId
+                                          ,ISNULL(cm.[Name], '') As Name
+                                          ,ISNULL(cm.[FuelType],'') As FuelType
+                                          ,ISNULL(cm.[VIN], '') As VIN
+                                      FROM [CarRegister].[dbo].[CarModel] cm 
+                                      WHERE cm.Id=@Id";
+
+            SqlCommand cmdCarManufComboSelection = conn.CreateCommand();
+            cmdCarManufComboSelection.CommandType = CommandType.Text;
+            cmdCarManufComboSelection.CommandText = sQ;
+            cmdCarManufComboSelection.Parameters.AddWithValue("@Id", carmodelid);
+
+
+            if (conn.State != ConnectionState.Open)
+            {
+                conn.Open();
+            }
+
+
+            SqlDataAdapter carmanufda = new SqlDataAdapter(cmdCarManufComboSelection);
+            DataTable carmanufDT = new DataTable();
+            carmanufda.Fill(carmanufDT);
+
+            if (carmanufDT.Rows.Count > 0)
+            {
+
+                txtName.Text = carmanufDT.Rows[0]["Name"].ToString();
+                cmbManuf.SelectedValue = carmanufDT.Rows[0]["CarManufId"];
+                txtVIN.Text = carmanufDT.Rows[0]["VIN"].ToString();
+
+                switch (carmanufDT.Rows[0]["FuelType"].ToString())
+                {
+                    case "Diesel":
+                        rbDiesel.Checked = true;
+                        break;
+
+                    case "Petrol":
+                        rbPetrol.Checked = true;
+                        break;
+
+                    default:
+
+                        throw new NotImplementedException();
+                }
+            }
+        }
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -35,35 +154,14 @@ namespace carregistersystem
             {
                 case FormAction.CarModelAdd:
 
-                    Random randomVIN = new Random();
-
-                    //using this way to generate 13 numbar vin because random doesn t accept long number as argument
-                    string vinNumber = randomVIN.Next(1000000, 9999999).ToString() + randomVIN.Next(100000, 999999).ToString();
-                    //Debug info  MessageBox.Show(vinNumber);
-
-
-                    string checkvin = "SELECT * FROM CarModel WHERE VIN=@vin";
-                    SqlCommand checkvinquery = conn.CreateCommand();
-                    checkvinquery.CommandType = CommandType.Text;
-                  
-                    checkvinquery.CommandText = checkvin;
-
-                    checkvinquery.Parameters.AddWithValue("@vin", vinNumber);
-
-                    //ensuring that same VIN doesen t exist
-                    while ((int)checkvinquery.ExecuteNonQuery() > 0)
-                    {
-                         vinNumber = randomVIN.Next(1000000, 9999999).ToString() + randomVIN.Next(100000, 999999).ToString();
-                        break;
-                    }
-
+              
 
                     string addquerytext = "INSERT INTO CarModel  (CarManufId,Name,FuelType,VIN,CarManufName) VALUES (@CarManufId,@Name,@FuelType,@VIN,@CarManufName)";
                     SqlCommand addquery = conn.CreateCommand();
                     addquery.CommandType = CommandType.Text;
                     addquery.CommandText = addquerytext;
 
-                    selectedcarmanuf = comboBox1.Text;
+                    selectedcarmanuf = cmbManuf.Text;
 
 
                     selectedcarmanufname = selectedcarmanuf.Substring(selectedcarmanuf.IndexOf("-") + 1);
@@ -78,17 +176,13 @@ namespace carregistersystem
 
 
 
-                    if (string.IsNullOrWhiteSpace(textBox1.Text))
+                    if (string.IsNullOrWhiteSpace(txtName.Text))
                     {
                         MessageBox.Show("You have not entered a model name");
                         return;
                     }
-                    if ((radioButton1.Checked == false && radioButton2.Checked == false))
-                    {
-                        MessageBox.Show("You have to choose the fuel type!");
-                        return;
-                    }
-                    if (string.IsNullOrEmpty(comboBox1.Text))
+                  
+                    if (string.IsNullOrEmpty(cmbManuf.Text))
                     {
                         MessageBox.Show("You have did not choose a model car manufacturer");
                         return;
@@ -96,6 +190,7 @@ namespace carregistersystem
                     if (checkname > 0)
                     {
                         MessageBox.Show("Car model with that name already exists!");
+                        MessageBox.Show(checkname.ToString());
                         return;
                     }
 
@@ -104,27 +199,27 @@ namespace carregistersystem
 
                     else
                     {
-                        if (radioButton1.Checked == true)
+                        if (rbDiesel.Checked == true)
                         {
                             fueltype = "Diesel";
                         }
-                        if (radioButton2.Checked == true)
+                        if (rbPetrol.Checked == true)
                         {
                             fueltype = "Petrol";
                         }
 
-                         selectedcarmanufid = getselectedcarmanufid();
+                        selectedcarmanufid = getselectedcarmanufid();
 
                         addquery.Parameters.AddWithValue("@CarManufId", selectedcarmanufid);
                         // MessageBox.Show(selectedcarmanufid);
-                        addquery.Parameters.AddWithValue("@Name", textBox1.Text);
+                        addquery.Parameters.AddWithValue("@Name", txtName.Text);
                         addquery.Parameters.AddWithValue("@FuelType", fueltype);
                         addquery.Parameters.AddWithValue("VIN", vinNumber);
                         addquery.Parameters.AddWithValue("CarManufName", selectedcarmanufname);
 
                         addquery.ExecuteNonQuery();
                         changesmade = true;
-                        MessageBox.Show("Car model succesfully added!");
+                       
                         this.Close();
                     }
 
@@ -134,16 +229,9 @@ namespace carregistersystem
                     break;
 
                 case FormAction.CarModelEdit:
+                    bool editmade = false;
 
-
-                    if (radioButton1.Checked == true)
-                    {
-                        fueltype = "Diesel";
-                    }
-                    if (radioButton2.Checked == true)
-                    {
-                        fueltype = "Petrol";
-                    }
+                    editmade = false;
 
 
                      checkname= checknamefunction();
@@ -162,37 +250,49 @@ namespace carregistersystem
                     carmanufqueryname.CommandType = CommandType.Text;
                     carmanufqueryname.CommandText = querytext;
                     carmanufqueryname.Parameters.AddWithValue("@Id", selectedcarmanufid);
-                    string carmanufname=(string)carmanufqueryname.ExecuteScalar();
+                    string curentcarmanufname=(string)carmanufqueryname.ExecuteScalar();
 
-                   // MessageBox.Show(checkname.ToString());
+                  
+                    // MessageBox.Show(checkname.ToString());
 
-                    editquery.Parameters.AddWithValue("@CarManufId", selectedcarmanufid);
-                    editquery.Parameters.AddWithValue("@Name", textBox1.Text);
-                    editquery.Parameters.AddWithValue("@Id", carmodelid);
-                    editquery.Parameters.AddWithValue("@FuelType", fueltype);
-                    editquery.Parameters.AddWithValue("CarManufName", carmanufname);
+                    string curentfueltype = " ";
 
-                    if (checkname > 0)
+                    if (rbDiesel.Checked == true)
                     {
-                        if (textBox1.Text == carmodelname)
-                        {
-                            MessageBox.Show("No changes were made!");
-                        }
-                        else
-                        {
-
-                            MessageBox.Show("Edited name can not be existing!");
-                        }
-                        }
-
-                    else
+                        curentfueltype = "Diesel";
+                    }
+                    if (rbPetrol.Checked == true)
                     {
-                        editquery.ExecuteNonQuery();
-                        MessageBox.Show("Edit succesfull!");
-                        changesmade = true;
-                        this.Close();
+                        curentfueltype = "Petrol";
                     }
 
+                    editquery.Parameters.AddWithValue("@CarManufId", selectedcarmanufid);
+                    editquery.Parameters.AddWithValue("@Name", txtName.Text);
+                    editquery.Parameters.AddWithValue("@Id", carmodelid);
+                    editquery.Parameters.AddWithValue("@FuelType", curentfueltype);
+                    editquery.Parameters.AddWithValue("CarManufName", curentcarmanufname);
+
+                    if ((!txtName.Text.Equals(carmodelname)  || !cmbManuf.Text.Contains("-" + carmanufname)   || !curentfueltype.Equals(fueltype))&&checkname==0)
+                    {
+                       
+                        editmade = true;
+                    }
+                    else
+                    {
+                        MessageBox.Show("In order to edit car model you must change any property!");
+                        editmade = false;
+                    }
+
+                    if (editmade )
+                    {
+
+                        editquery.ExecuteNonQuery();
+                      
+                        changesmade = true;
+                        editmade = false;
+                        this.Close();
+
+                    }
                     break;
 
                 case FormAction.CarModelDel:
@@ -207,33 +307,61 @@ namespace carregistersystem
                     changesmade = true;
                     this.Close();
 
-
                     break;
-
-
-
-
 
             }
 
+        }
+
+        private string GenerateVIN()
+        {
+            Random randomVIN = new Random();
+
+            //using this way to generate 13 numbar vin because random doesn t accept long number as argument
+            string vinNumber = randomVIN.Next(1000000, 9999999).ToString() + randomVIN.Next(100000, 999999).ToString();
+            //Debug info  MessageBox.Show(vinNumber);
 
 
+            string checkvin = "SELECT * FROM CarModel WHERE VIN=@vin";
+            SqlCommand checkvinquery = conn.CreateCommand();
+            checkvinquery.CommandType = CommandType.Text;
 
+            checkvinquery.CommandText = checkvin;
 
+            checkvinquery.Parameters.AddWithValue("@vin", vinNumber);
 
+            //ensuring that same VIN doesen t exist
+            while ((int)checkvinquery.ExecuteNonQuery() > 0)
+            {
+                vinNumber = randomVIN.Next(1000000, 9999999).ToString() + randomVIN.Next(100000, 999999).ToString();
+                break;
+            }
 
+            return vinNumber;
+        }
 
+        private void btnRefreshVIN_Click(object sender, EventArgs e)
+        {
+            txtVIN.Text = GenerateVIN();
+        }
 
+        private void txtName_KeyDown(object sender, KeyEventArgs e)
+        {
 
+            if (e.KeyCode == Keys.Enter)
+            {
+                SelectNextControl(txtName, true, true, true, false);
 
+            }
+        }
 
+        private void cmbManuf_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                SelectNextControl(cmbManuf, true, true, true, false);
 
-
-
-
-
-
-
+            }
         }
 
         private void frmeditcarmodel_FormClosed(object sender, FormClosedEventArgs e)
@@ -252,23 +380,34 @@ namespace carregistersystem
 
         private int checknamefunction()
         {
-             checkname = -1;
+            checkname = 0; 
 
-            string chekcnamequerytext = "SELECT * FROM CarModel WHERE Name=@Name";
+            string chekcnamequerytext = "SELECT COUNT(*) FROM CarModel WHERE Name=@Name"; 
+
+            if (modus == FormAction.CarModelEdit)
+            {
+                chekcnamequerytext += " AND Id != @Id"; 
+            }
+
             SqlCommand checknamequery = conn.CreateCommand();
             checknamequery.CommandType = CommandType.Text;
             checknamequery.CommandText = chekcnamequerytext;
-            checknamequery.Parameters.AddWithValue("@Name", textBox1.Text);
+            checknamequery.Parameters.AddWithValue("@Name", txtName.Text);
 
+            if (modus == FormAction.CarModelEdit)
+            {
+                checknamequery.Parameters.AddWithValue("@Id", carmodelid);
+            }
 
-            var resultchecknamequery = checknamequery.ExecuteScalar();
-            checkname = resultchecknamequery != null ? (int)resultchecknamequery : -1;
-            return checkname;
+         
+            int count = (int)checknamequery.ExecuteScalar(); 
+
+            return count; 
         }
 
         private int getselectedcarmanufid()
         {
-            selectedcarmanuf = comboBox1.Text;
+            selectedcarmanuf = cmbManuf.Text;
 
             if (string.IsNullOrEmpty(selectedcarmanuf))
             {
@@ -294,7 +433,7 @@ namespace carregistersystem
         }
 
         public int carmodelid, carmanufid;
-        public frmeditcarmodel()
+        public frmEditCarModel()
         {
 
             InitializeComponent();
@@ -310,174 +449,23 @@ namespace carregistersystem
             this.Close();
         }
 
-        private void frmeditcarmodel_Load(object sender, EventArgs e)
+        
+
+        private void CmbInitalization()
         {
-
-        //    MessageBox.Show(carmodelid.ToString());
-          
-            IniFile ini = new IniFile(@"..\\..\\include\\config.ini");
-            provider = ini.Read("DatabaseConfig", "Server");
-            username = ini.Read("DatabaseConfig", "Username");
-            password = ini.Read("DatabaseConfig", "Password");
-            db = ini.Read("DatabaseConfig", "dbupiti");
-
-            //added MultipleActiveResultSets=True for reading two readers in same time
-            conn.ConnectionString = $"Data Source={provider};Initial Catalog={db};User id={username};Password={password};MultipleActiveResultSets=True";
-            
-
-
-            string carmanufnamequerytext = "SELECT Name FROM CarManuf WHERE Active=1";
-            string carmanufserialnumquerytext = "SELECT SerialNum FROM CarManuf  WHERE Active=1";
-
-            
-            SqlCommand carmanufnamequery = conn.CreateCommand();
-            SqlCommand carmanufserialnumquery = conn.CreateCommand();
-
-            carmanufnamequery.CommandType = CommandType.Text;
-            carmanufserialnumquery.CommandType = CommandType.Text;
-
-            carmanufnamequery.CommandText = carmanufnamequerytext;
-            carmanufserialnumquery.CommandText = carmanufserialnumquerytext;
-            
-
-
-
-            try
-            {
-                conn.Open();
-
-                SqlDataReader namereader = carmanufnamequery.ExecuteReader();
-                SqlDataReader serialnumreader = carmanufserialnumquery.ExecuteReader();
-
-                while (namereader.Read() && serialnumreader.Read())
-                {
-                    string combocontent = serialnumreader["SerialNum"].ToString() + "-" + namereader["Name"].ToString();
-                    comboBox1.Items.Add(combocontent);
-                  
-                    bool check = false;
-
-                   
-
-
-                    //MessageBox.Show(combocontent + " " + " " + carmanufname );
-                   //  check = combocontent.Contains("-" + carmanufname);
-
-                    if (check)
-                    {
-                       // MessageBox.Show("HEJ");
-                        //comboBox1.SelectedItem = combocontent;
-
-                    }
-
-
-
-                }
-
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error: " + ex.Message);
-            }
-
-            
-
-
-
-
-
-
-            switch (modus)
-
-            {
-                case FormAction.CarModelAdd:
-
-
-                    
-
-
-
-
-
-
-
-
-
-                    button1.Text = "ADD";
-                    break;
-
-                case FormAction.CarModelEdit:
-                    button1.Text = "EDIT";
-                    textBox1.Text = carmodelname;
-                    if (fueltype == "Diesel")
-                    {
-                        radioButton1.Checked = true;
-                    }
-
-                    if (fueltype == "Petrol")
-                    {
-                        radioButton2.Checked = true;
-                    }
-
-                    foreach (var item in comboBox1.Items)
-                    {
-                        string comboboxitem = item.ToString();
-                        if (comboboxitem.Contains(carmanufname))
-                        {
-                            comboBox1.Text = comboboxitem;
-                            break;
-                        }
-
-                    }
-
-                    break;
-
-                case FormAction.CarModelDel:
-
-                    foreach (var item in comboBox1.Items)
-                    {
-                        string comboboxitem = item.ToString();
-                        if (comboboxitem.Contains(carmanufname))
-                        {
-                            comboBox1.Text = comboboxitem;
-                            break;
-                        }
-
-                    }
-                    textBox1.Text = carmodelname;
-                    radioButton1.Enabled = false;
-                    radioButton2.Enabled = false;
-                    textBox1.Enabled = false;
-                    comboBox1.Enabled = false;
-                    button1.Text = "DELETE";
-
-                    if (fueltype == "Diesel")
-                    {
-                        radioButton1.Checked = true;
-                    }
-
-                    if (fueltype == "Petrol")
-                    {
-                        radioButton2.Checked = true;
-                    }
-
-                    break;
-
-
-
-
-
-            }
-
-
-
-
-
-
-
-
-
-
-
+            SqlCommand cmdCarManufComboSelection = conn.CreateCommand();
+            cmdCarManufComboSelection.CommandType = CommandType.Text;
+            cmdCarManufComboSelection.CommandText = "Select Id As CarManufId, SerialNum + '-' + Name As SerialNumName FROM CarManuf WHERE Active=1";
+
+            conn.Open();
+
+            SqlDataAdapter carmanufda = new SqlDataAdapter(cmdCarManufComboSelection);
+            DataTable carmanufDT = new DataTable();
+            carmanufda.Fill(carmanufDT);
+
+            cmbManuf.DataSource = carmanufDT;
+            cmbManuf.DisplayMember = "SerialNumName";
+            cmbManuf.ValueMember = "CarManufId";
         }
     }
 }

@@ -25,7 +25,7 @@ namespace carregistersystem
                     if (result == DialogResult.OK)
                     {
                         ///open carmanuf
-                        carmanuf carmanufForm = new carmanuf();
+                        frmCarManuf carmanufForm = new frmCarManuf();
                         
                             carmanufForm.ShowDialog();
                         
@@ -33,7 +33,7 @@ namespace carregistersystem
                     else if (result == DialogResult.Ignore)
                     {
                        //open carmodel
-                        carmodel carmodelform = new carmodel();
+                        frmCarModel carmodelform = new frmCarModel();
                         
                             carmodelform.ShowDialog();
                         
