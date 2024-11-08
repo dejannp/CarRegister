@@ -9,6 +9,7 @@ namespace carregistersystem
     {
         int checknamequeryresult = 0, checkserialqueryresult = 0;
         SqlConnection conn = new SqlConnection();
+     
         public FormAction modus;
         public string name, serial;
         string username, password, db, provider;
@@ -16,7 +17,7 @@ namespace carregistersystem
         bool changesmade = false;
         bool errorcheckvalidation=false;
         public bool UpdateFlag { get; set; } = false;
-
+        public int UpdatedCarManufId { get; private set; } = 0;
         public frmEditCarManuf()
         {
             InitializeComponent();
@@ -71,16 +72,25 @@ namespace carregistersystem
 
             try
             {
+                SqlCommand addedCarManufIdquery = conn.CreateCommand();
+                addedCarManufIdquery.CommandType = CommandType.Text;
+                addedCarManufIdquery.CommandText = "SELECT Id FROM CarManuf WHERE SerialNum=@serial";
+                addedCarManufIdquery.Parameters.AddWithValue("@serial", txtSerial.Text);
                 switch (modus)
                 {
                     case FormAction.CarManufAdd:
                         addcarmanuf();
+
+                      UpdatedCarManufId = (int)addedCarManufIdquery.ExecuteScalar();
                         break;
 
                     case FormAction.CarManufEdit:
                         editcarmanuf();
                         if (!errorcheckvalidation)
                         {
+                          
+                            UpdatedCarManufId = (int)addedCarManufIdquery.ExecuteScalar();
+
                             this.Close();
                         }
                         break;

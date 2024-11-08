@@ -20,6 +20,7 @@ namespace carregistersystem
         public int carmodelid, carmanufid;
         public string name, vin,fueltype, CarManufName;
         SqlConnection conn = new SqlConnection();
+        BindingSource carModelBindingSource = new BindingSource();
 
         private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -65,36 +66,36 @@ namespace carregistersystem
             search = Regex.Replace(search, @"['""@$(){}[+?!#]", "");
 
            
-            List<string> searchContent = search.Split(' ').ToList();
-            List<string> searchConditions = new List<string>();
+            List<string> searchList = search.Split(' ').ToList();
+            List<string> searchConditionsList = new List<string>();
 
           
-            foreach (string keyword in searchContent)
+            foreach (string keyword in searchList)
             {
                 
                 if (string.IsNullOrWhiteSpace(keyword)) continue;
 
                 
                 List<string> conditions = new List<string>
-        {
-            $"cmf.Name LIKE '%{keyword}%'",
-            $"cmf.SerialNum LIKE '%{keyword}%'",
-            $"(cmf.SerialNum + '-' + cmf.Name) LIKE '%{keyword}%'",
-            $"cm.[Name] LIKE '%{keyword}%'",
-            $"cm.[FuelType] LIKE '%{keyword}%'",
-            $"cm.[VIN] LIKE '%{keyword}%'"
-        };
+                {
+                    $"cmf.Name LIKE '%{keyword}%'",
+                    $"cmf.SerialNum LIKE '%{keyword}%'",
+                    $"(cmf.SerialNum + '-' + cmf.Name) LIKE '%{keyword}%'",
+                    $"cm.[Name] LIKE '%{keyword}%'",
+                    $"cm.[FuelType] LIKE '%{keyword}%'",
+                    $"cm.[VIN] LIKE '%{keyword}%'"
+                };
 
                 
-                searchConditions.Add("(" + string.Join(" OR ", conditions) + ")");
+                searchConditionsList.Add("(" + string.Join(" OR ", conditions) + ")");
             }
 
           
-            string searchQueryText = searchConditions.Count > 0
-                ? "AND " + string.Join(" AND ", searchConditions)
+            string searchQueryFilter = searchConditionsList.Count > 0
+                ? "AND " + string.Join(" AND ", searchConditionsList)
                 : "";
 
-            return searchQueryText;
+            return searchQueryFilter;
         }
 
 
@@ -201,12 +202,43 @@ namespace carregistersystem
 
             if (cm != null)
             {
-                if (cm.UpdateFlag)
+               
+
+                if (cm != null && cm.UpdateFlag)
                 {
                     FillDataGridWithData();
 
+                    // Selektuj novi ili izmijenjeni red u DataGridView-u
+                    if (cm.UpdatedCarModelId > 0)
+                    {
+                        foreach (DataGridViewRow row in dataGridView1.Rows)
+                        {
+                            if ((int)row.Cells["clmnCarModelId"].Value == cm.UpdatedCarModelId)
+                            {
+                                row.Selected = true;
+                                dataGridView1.FirstDisplayedScrollingRowIndex = row.Index;
+                                break;
+                            }
+                        }
+                    }
                 }
 
+            }
+
+            if (cm != null && cm.DialogResult == DialogResult.OK && cm.carmodelid > 0)
+            {
+                FillDataGridWithData();
+
+                // Pronađi i selektuj red sa novo dodanim ili izmijenjenim zapisom
+                foreach (DataGridViewRow row in dataGridView1.Rows)
+                {
+                    if ((int)row.Cells["CarModelId"].Value == cm.carmodelid)
+                    {
+                        row.Selected = true;
+                        dataGridView1.FirstDisplayedScrollingRowIndex = row.Index;
+                        break;
+                    }
+                }
             }
         }
 
@@ -236,6 +268,9 @@ namespace carregistersystem
             DataTable carmodeldt = new DataTable();
             carmodelda.Fill(carmodeldt);
             dataGridView1.DataSource = carmodeldt;
+
+            carModelBindingSource.DataSource = carmodeldt;
+            dataGridView1.DataSource = carModelBindingSource;
         }
     }
 }

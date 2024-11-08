@@ -26,7 +26,7 @@ namespace carregistersystem
         public bool UpdateFlag { get; set; } = false;
         public int selectedCarModelId { get; set; } = 0;
         bool changesmade = false;
-
+        public int UpdatedCarModelId { get; private set; } = 0;
 
 
 
@@ -238,7 +238,13 @@ namespace carregistersystem
 
                         addquery.ExecuteNonQuery();
                         changesmade = true;
-                       
+                        SqlCommand addedCarmodelId = conn.CreateCommand();
+                        addedCarmodelId.CommandType = CommandType.Text;
+                        addedCarmodelId.CommandText = "SELECT Id FROM CarModel WHERE VIN=@VIN";
+                        addedCarmodelId.Parameters.AddWithValue("@VIN", vinNumber);
+                        
+
+                        UpdatedCarModelId = (int)addedCarmodelId.ExecuteScalar();
                         this.Close();
                     }
 
