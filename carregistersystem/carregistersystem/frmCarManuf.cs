@@ -41,11 +41,11 @@ namespace carregistersystem
             deleteToolStripMenuItem.Image=Bitmap.FromFile(@"..\\..\\include\\iks.bmp");
             exitToolStripMenuItem.Image = Bitmap.FromFile(@"..\\..\\include\\exit.bmp");
 
-            IniFile ini = new IniFile(@"..\\..\\include\\config.ini");
-            provider = ini.Read("DatabaseConfig", "Server");
-            username = ini.Read("DatabaseConfig", "Username");
-            password = ini.Read("DatabaseConfig", "Password");
-            db = ini.Read("DatabaseConfig", "dbupiti");
+            ConfigConnection.Initialize();
+            username = ConfigConnection.username;
+            password = ConfigConnection.password;
+            db = ConfigConnection.database;
+            provider = ConfigConnection.provider;
 
             conn.ConnectionString = $"Data Source={provider};Initial Catalog={db};User id={username};Password={password};";
             ///
@@ -92,34 +92,40 @@ namespace carregistersystem
 
         private void searchData()
         {
-            string search = textBox1.Text;
+            string search = txtSearch.Text.Trim();
             List<string> searchContent = search.Split(' ').ToList();
             int counter = searchContent.Count;
 
+            string searchQueryText = "SELECT Name, SerialNum AS 'Serial' FROM CarManuf WHERE Active = 1";
 
-            string searchQueryText = "SELECT Name, SerialNum As 'Serial' FROM CarManuf WHERE Active = 1 AND (";
-
-            // making parameters list from search for SQL query
-            List<string> nameParameters = new List<string>();
-            List<string> serialNumParamters = new List<string>();
-
-            for (int i = 0; i < counter; i++)
+            if (counter > 0)
             {
-                nameParameters.Add($"Name LIKE @search{i}");
-                serialNumParamters.Add($"SerialNum LIKE @search{i}");
+                List<string> combinedConditions = new List<string>();
+
+            
+                for (int i = 0; i < counter; i++)
+                {
+                    string nameCondition = $"Name LIKE @search{i}";
+                    string serialCondition = $"SerialNum LIKE @search{i}";
+
+                 
+                    combinedConditions.Add($"({nameCondition} OR {serialCondition})");
+                }
+
+              
+                if (combinedConditions.Count > 0)
+                {
+                    searchQueryText += " AND (" + string.Join(" AND ", combinedConditions) + ")";
+                }
             }
-
-
-            searchQueryText += "(" + string.Join(" OR ", nameParameters) + ") OR (" + string.Join(" OR ", serialNumParamters) + "))";
 
             SqlCommand searchquery = conn.CreateCommand();
             searchquery.CommandType = CommandType.Text;
             searchquery.CommandText = searchQueryText;
 
-            //Adding parameters for search
+           
             for (int i = 0; i < counter; i++)
             {
-                //MessageBox.Show(searchContent[i].ToString());
                 searchquery.Parameters.AddWithValue($"@search{i}", "%" + searchContent[i] + "%");
             }
 
@@ -127,14 +133,6 @@ namespace carregistersystem
             DataTable searchDt = new DataTable();
             searchDa.Fill(searchDt);
             dataGridView1.DataSource = searchDt;
-
-
-            //DEBUG File.WriteAllText("beton",searchQueryText.ToString());
-            //File.WriteAllText("beton", searchQuery);
-
-
-
-
 
 
 

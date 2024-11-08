@@ -46,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigConnection.cs" />
     <Compile Include="frmCarManuf.cs">
       <SubType>Form</SubType>
     </Compile>

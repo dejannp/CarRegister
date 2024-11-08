@@ -26,10 +26,11 @@ namespace carregistersystem
 
         private void login_Load(object sender, EventArgs e)
         {
-            username = ini.Read("DatabaseConfig", "Username");
-            password = ini.Read("DatabaseConfig", "Password");
-            db = ini.Read("DatabaseConfig", "Database");
-            provider = ini.Read("DatabaseConfig", "Server");
+            ConfigConnection.Initialize();
+            username = ConfigConnection.username;
+            password = ConfigConnection.password;
+            db = ConfigConnection.db;
+            provider = ConfigConnection.provider;
 
             textBox1.Text = provider;
             textBox2.Text = username;

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Data.SqlClient;
+using System.Text.RegularExpressions;
 
 namespace carregistersystem
 {
@@ -51,27 +52,59 @@ namespace carregistersystem
         {
             //search to do
 
+            string sFilter;
+           sFilter = GetSearchFilter();
+
+            FillDataGridWithData(sFilter);
+        }
+
+        private string GetSearchFilter()
+        {
+         
+            string search = txtSearch.Text.Trim();
+            search = Regex.Replace(search, @"['""@$(){}[+?!#]", "");
+
+           
+            List<string> searchContent = search.Split(' ').ToList();
+            List<string> searchConditions = new List<string>();
+
+          
+            foreach (string keyword in searchContent)
+            {
+                
+                if (string.IsNullOrWhiteSpace(keyword)) continue;
+
+                
+                List<string> conditions = new List<string>
+        {
+            $"cmf.Name LIKE '%{keyword}%'",
+            $"cmf.SerialNum LIKE '%{keyword}%'",
+            $"(cmf.SerialNum + '-' + cmf.Name) LIKE '%{keyword}%'",
+            $"cm.[Name] LIKE '%{keyword}%'",
+            $"cm.[FuelType] LIKE '%{keyword}%'",
+            $"cm.[VIN] LIKE '%{keyword}%'"
+        };
+
+                
+                searchConditions.Add("(" + string.Join(" OR ", conditions) + ")");
+            }
+
+          
+            string searchQueryText = searchConditions.Count > 0
+                ? "AND " + string.Join(" AND ", searchConditions)
+                : "";
+
+            return searchQueryText;
+        }
 
 
+        private void txtSearch_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode==Keys.Enter)
+            {
+                button1_Click(sender,e);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            }
 
 
 
@@ -113,11 +146,11 @@ namespace carregistersystem
             deleteToolStripMenuItem.Image = Bitmap.FromFile(@"..\\..\\include\\iks.bmp");
             exitToolStripMenuItem.Image = Bitmap.FromFile(@"..\\..\\include\\exit.bmp");
 
-            IniFile ini = new IniFile(@"..\\..\\include\\config.ini");
-            provider = ini.Read("DatabaseConfig", "Server");
-            username = ini.Read("DatabaseConfig", "Username");
-            password = ini.Read("DatabaseConfig", "Password");
-            db = ini.Read("DatabaseConfig", "dbupiti");
+            ConfigConnection.Initialize();
+            username = ConfigConnection.username;
+            password = ConfigConnection.password;
+            db = ConfigConnection.database;
+            provider = ConfigConnection.provider;
 
             conn.ConnectionString = $"Data Source={provider};Initial Catalog={db};User id={username};Password={password};";
 
@@ -170,42 +203,39 @@ namespace carregistersystem
             {
                 if (cm.UpdateFlag)
                 {
-                    FillDataGridWithData(cm.carmodelid);
+                    FillDataGridWithData();
 
                 }
 
             }
         }
 
-        private void FillDataGridWithData(int selectedCarModelId = 0)
+        private void FillDataGridWithData(string searchFilter = "")
         {
             if (conn.State != ConnectionState.Open)
             {
                 conn.Open();
             }
 
-            string carmodelquerytext = @"SELECT  cm.[Id] As CarModelId
-                                      ,ISNULL(cm.[CarManufId], 0) As CarManufId
-                                      ,ISNULL(cm.[Name], '') As Name
-                                      ,ISNULL(cm.[FuelType],'') As FuelType
-                                      ,ISNULL(cm.[VIN], '') As VIN
-	                                  ,cmf.Name As CarManufName
-                                  FROM [CarRegister].[dbo].[CarModel] cm
-                                  LEFT JOIN CarRegister.dbo.CarManuf cmf ON cmf.Id= cm.CarManufId";
+            string carmodelquerytext = $@"
+        SELECT  
+            cm.[Id] AS CarModelId,
+            ISNULL(cm.[CarManufId], 0) AS CarManufId,
+            ISNULL(cm.[Name], '') AS Name,
+            ISNULL(cm.[FuelType], '') AS FuelType,
+            ISNULL(cm.[VIN], '') AS VIN,
+            cmf.SerialNum + '-' + cmf.Name AS CarManufName 
+        FROM 
+            [CarRegister].[dbo].[CarModel] cm
+        LEFT JOIN 
+            CarRegister.dbo.CarManuf cmf ON cmf.Id = cm.CarManufId
+        WHERE 
+            cmf.Active = 1 {searchFilter}";
+
             SqlDataAdapter carmodelda = new SqlDataAdapter(carmodelquerytext, conn);
             DataTable carmodeldt = new DataTable();
             carmodelda.Fill(carmodeldt);
             dataGridView1.DataSource = carmodeldt;
-
-            foreach (DataGridViewRow row in dataGridView1.Rows)
-            {
-                // 0 is the column index
-                if (row.Cells["clmnCarModelId"].Value.ToString().Equals(selectedCarModelId))
-                {
-                    row.Selected = true;
-                    break;
-                }
-            }
         }
     }
 }

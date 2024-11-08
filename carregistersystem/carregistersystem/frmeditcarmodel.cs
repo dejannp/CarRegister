@@ -20,10 +20,11 @@ namespace carregistersystem
 
         string username, password, db, provider, vinNumber;
         public FormAction modus;
-        public string carmodelname, fueltype, carmanufname;
+        string carmodelname, fueltype, carmanufname;
         string selectedcarmanuf, selectedcarmanufname;
         int selectedcarmanufid=0,checkname=0;
         public bool UpdateFlag { get; set; } = false;
+        public int selectedCarModelId { get; set; } = 0;
         bool changesmade = false;
 
 
@@ -32,16 +33,17 @@ namespace carregistersystem
 
         private void frmeditcarmodel_Load(object sender, EventArgs e)
         {
+            cmbManuf.DropDownStyle = ComboBoxStyle.DropDownList;
 
             //    MessageBox.Show(carmodelid.ToString());
 
-            IniFile ini = new IniFile(@"..\\..\\include\\config.ini");
-            provider = ini.Read("DatabaseConfig", "Server");
-            username = ini.Read("DatabaseConfig", "Username");
-            password = ini.Read("DatabaseConfig", "Password");
-            db = ini.Read("DatabaseConfig", "dbupiti");
+            ConfigConnection.Initialize();
+            username = ConfigConnection.username;
+            password = ConfigConnection.password;
+            db = ConfigConnection.database;
+            provider = ConfigConnection.provider;
 
-            
+
 
             conn.ConnectionString = $"Data Source={provider};Initial Catalog={db};User id={username};Password={password};";
 
@@ -103,13 +105,21 @@ namespace carregistersystem
                                           ,ISNULL(cm.[Name], '') As Name
                                           ,ISNULL(cm.[FuelType],'') As FuelType
                                           ,ISNULL(cm.[VIN], '') As VIN
+                                            , ISNULL (cmf.[Name],'') As CarManufName 
                                       FROM [CarRegister].[dbo].[CarModel] cm 
+                                    LEFT JOIN CarRegister.dbo.CarManuf cmf ON cmf.Id= cm.CarManufId
                                       WHERE cm.Id=@Id";
 
             SqlCommand cmdCarManufComboSelection = conn.CreateCommand();
             cmdCarManufComboSelection.CommandType = CommandType.Text;
             cmdCarManufComboSelection.CommandText = sQ;
             cmdCarManufComboSelection.Parameters.AddWithValue("@Id", carmodelid);
+
+
+
+
+
+
 
 
             if (conn.State != ConnectionState.Open)
@@ -128,6 +138,11 @@ namespace carregistersystem
                 txtName.Text = carmanufDT.Rows[0]["Name"].ToString();
                 cmbManuf.SelectedValue = carmanufDT.Rows[0]["CarManufId"];
                 txtVIN.Text = carmanufDT.Rows[0]["VIN"].ToString();
+                carmanufname = carmanufDT.Rows[0]["CarManufName"].ToString();
+                carmodelname = carmanufDT.Rows[0]["Name"].ToString();
+                vinNumber = carmanufDT.Rows[0]["VIN"].ToString();
+
+             
 
                 switch (carmanufDT.Rows[0]["FuelType"].ToString())
                 {
@@ -144,6 +159,11 @@ namespace carregistersystem
                         throw new NotImplementedException();
                 }
             }
+
+
+
+
+
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -156,7 +176,7 @@ namespace carregistersystem
 
               
 
-                    string addquerytext = "INSERT INTO CarModel  (CarManufId,Name,FuelType,VIN,CarManufName) VALUES (@CarManufId,@Name,@FuelType,@VIN,@CarManufName)";
+                    string addquerytext = "INSERT INTO CarModel  (CarManufId,Name,FuelType,VIN) VALUES (@CarManufId,@Name,@FuelType,@VIN)";
                     SqlCommand addquery = conn.CreateCommand();
                     addquery.CommandType = CommandType.Text;
                     addquery.CommandText = addquerytext;
@@ -215,7 +235,6 @@ namespace carregistersystem
                         addquery.Parameters.AddWithValue("@Name", txtName.Text);
                         addquery.Parameters.AddWithValue("@FuelType", fueltype);
                         addquery.Parameters.AddWithValue("VIN", vinNumber);
-                        addquery.Parameters.AddWithValue("CarManufName", selectedcarmanufname);
 
                         addquery.ExecuteNonQuery();
                         changesmade = true;
@@ -236,7 +255,7 @@ namespace carregistersystem
 
                      checkname= checknamefunction();
                    // MessageBox.Show(checkname.ToString());
-                    string editquerytext = "UPDATE CarModel SET Name=@Name, FuelType=@FuelType, CarManufName=@CarManufName, CarManufId=@CarManufId WHERE Id=@ID ";
+                    string editquerytext = "UPDATE CarModel SET Name=@Name, FuelType=@FuelType,CarManufId=@CarManufId,VIN=@VIN WHERE Id=@ID ";
 
                     SqlCommand editquery = conn.CreateCommand();
                     editquery.CommandType = CommandType.Text;
@@ -270,16 +289,25 @@ namespace carregistersystem
                     editquery.Parameters.AddWithValue("@Name", txtName.Text);
                     editquery.Parameters.AddWithValue("@Id", carmodelid);
                     editquery.Parameters.AddWithValue("@FuelType", curentfueltype);
-                    editquery.Parameters.AddWithValue("CarManufName", curentcarmanufname);
+                    editquery.Parameters.AddWithValue("@VIN", txtVIN.Text);
 
-                    if ((!txtName.Text.Equals(carmodelname)  || !cmbManuf.Text.Contains("-" + carmanufname)   || !curentfueltype.Equals(fueltype))&&checkname==0)
+
+                    if ((!txtName.Text.Equals(carmodelname)  || !cmbManuf.Text.Contains("-" + carmanufname)   || !curentfueltype.Equals(fueltype))&&checkname==0||!txtVIN.Text.Equals(vinNumber))
                     {
                        
                         editmade = true;
                     }
                     else
                     {
-                        MessageBox.Show("In order to edit car model you must change any property!");
+                        if (checkname > 0)
+                        {
+                            MessageBox.Show(" The new name already belongs to an existing record");
+                        }
+                        else
+                        {
+                            MessageBox.Show("In order to edit car model you must change any property!");
+                            
+                        }
                         editmade = false;
                     }
 
@@ -369,6 +397,7 @@ namespace carregistersystem
 
             if (changesmade)
             {
+                selectedCarModelId = carmodelid;
                 UpdateFlag = true;
             }
 

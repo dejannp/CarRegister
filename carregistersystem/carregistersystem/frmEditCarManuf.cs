@@ -14,6 +14,7 @@ namespace carregistersystem
         string username, password, db, provider;
         SqlCommand checknamequery, checkserialquery;
         bool changesmade = false;
+        bool errorcheckvalidation=false;
         public bool UpdateFlag { get; set; } = false;
 
         public frmEditCarManuf()
@@ -78,13 +79,21 @@ namespace carregistersystem
 
                     case FormAction.CarManufEdit:
                         editcarmanuf();
+                        if (!errorcheckvalidation)
+                        {
+                            this.Close();
+                        }
                         break;
 
                     case FormAction.CarManufDel:
                         deletcarmanuf();
+                        if (!errorcheckvalidation)
+                        {
+                            this.Close();
+                        }
                         break;
                 }
-                this.Close();
+               
             }
             catch (SqlException ex)
             {
@@ -124,6 +133,7 @@ namespace carregistersystem
             {
                 // Manufacturer not found
                 MessageBox.Show("The car manufacturer you are trying to delete is not found in the database.");
+                errorcheckvalidation = true;
             }
         }
 
@@ -148,6 +158,7 @@ namespace carregistersystem
                     if (checknamequeryresult > 0)
                     {
                         MessageBox.Show("Manufacturer name already exists.");
+                        errorcheckvalidation = true;
                         return;
                     }
                 }
@@ -165,6 +176,7 @@ namespace carregistersystem
                     if (checkserialqueryresult > 0)
                     {
                         MessageBox.Show("Serial number already exists.");
+                        errorcheckvalidation = true;
                         return;
                     }
                 }
@@ -241,11 +253,11 @@ namespace carregistersystem
             txtName.Text = name;
             txtSerial.Text = serial;
 
-            IniFile ini = new IniFile(@"..\\..\\include\\config.ini");
-            provider = ini.Read("DatabaseConfig", "Server");
-            username = ini.Read("DatabaseConfig", "Username");
-            password = ini.Read("DatabaseConfig", "Password");
-            db = ini.Read("DatabaseConfig", "dbupiti");
+            ConfigConnection.Initialize();
+            username = ConfigConnection.username;
+            password = ConfigConnection.password;
+            db = ConfigConnection.database;
+            provider = ConfigConnection.provider;
 
             conn.ConnectionString = $"Data Source={provider};Initial Catalog={db};User id={username};Password={password};";
 
